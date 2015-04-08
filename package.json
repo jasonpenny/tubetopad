@@ -1,0 +1,13 @@
+{
+  "name": "tubetopad",
+  "version": "0.1.0",
+  "description": "A tool to download youtube videos and make ready for iTunes import as TV Shows",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Jason Penny",
+  "license": "MIT",
+  "dependencies": {
+  }
+}
