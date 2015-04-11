@@ -9,5 +9,9 @@
   "author": "Jason Penny",
   "license": "MIT",
   "dependencies": {
+    "agenda": "^0.6.28",
+    "handbrake-js": "^2.0.4",
+    "mongodb": "^1.4.35",
+    "youtube-dl": "^1.10.2"
   }
 }
