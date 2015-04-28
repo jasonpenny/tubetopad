@@ -5,7 +5,10 @@ var handbrake = require('handbrake-js');
 var exec = require('child_process').exec;
 
 var Agenda = require('agenda');
-var agenda = new Agenda({db: {address: 'localhost:27017/tubetopad'}});
+var agenda = new Agenda({
+    db: {address: 'localhost:27017/tubetopad'},
+    defaultLockLifetime: 2 * 60 * 60 * 1000 // 2 hours
+});
 
 function mkdir(dir_path) {
     try {
@@ -26,7 +29,7 @@ agenda.define('enqueue video', function (job, done) {
         done();
     });
 });
-agenda.define('download URL', function (job, done) {
+agenda.define('download URL', {concurrency: 1}, function (job, done) {
     var data = job.attrs.data;
 
     console.log('downloadVideo: ' + path.basename(data.url));
@@ -77,6 +80,7 @@ agenda.define('download URL', function (job, done) {
     video.on('error', function (err) {
         failed = true;
         errorEvent = err;
+        console.log(' video.on(error)', err);
     });
 
     video.on('end', function (err) {
@@ -86,19 +90,21 @@ agenda.define('download URL', function (job, done) {
             job.save();
             done();
         } else {
+            console.log('finished downloading', output_filename);
             agenda.now('convert file for iPad', {data: data, filename: output_filename});
             done();
         }
     });
 });
-agenda.define('convert file for iPad', function (job, done) {
+agenda.define('convert file for iPad', {concurrency: 1}, function (job, done) {
     var inputfile = job.attrs.data.filename;
+
+    console.log('convertFileForIPad: ' + path.basename(inputfile));
 
     var output_path = path.join(__dirname, '../converted');
     mkdir(output_path);
 
-    console.log('convertFileForIPad: ' + path.basename(inputfile));
-
+    var failed = false, errorEvent = null;
     var options = {
         input: inputfile,
         output: path.join(output_path, path.basename(inputfile, path.extname(inputfile)) + '.mp4'),
@@ -108,6 +114,8 @@ agenda.define('convert file for iPad', function (job, done) {
     var hb = handbrake.spawn(options);
     hb.on('error', function (err) {
         console.log('handbrake error', err);
+        failed = true;
+        errorEvent = err;
         job.fail(err);
         job.save();
         done();
@@ -119,7 +127,17 @@ agenda.define('convert file for iPad', function (job, done) {
     //        progress.eta
     //    );
     //});
-    hb.on('end', function () {
+    hb.on('end', function (err) {
+        console.log('handbrake finished', options.output);
+        if (failed || err) {
+            console.log('  handbrake failed', errorEvent);
+            var fail = {file: 'FAILED ' + output_filename, errorEvent: errorEvent, err: err};
+            job.fail(fail);
+            job.save();
+            done();
+            return;
+        }
+
         fs.unlinkSync(inputfile);
 
         var data = {data: job.attrs.data.data, filename: options.output};
@@ -127,7 +145,7 @@ agenda.define('convert file for iPad', function (job, done) {
         done();
     });
 });
-agenda.define('set tv show metadata', function (job, done) {
+agenda.define('set tv show metadata', {concurrency: 1}, function (job, done) {
     var data = job.attrs.data.data;
     var inputfile = job.attrs.data.filename;
 
