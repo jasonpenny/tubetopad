@@ -2,8 +2,26 @@ var Agenda = require('agenda');
 
 var agenda = new Agenda({db: {address: 'localhost:27017/tubetopad'}});
 
-var data = {url: 'https://www.youtube.com/watch?v=w8fOEEMqpOw', show: 'DevOps'};
-agenda.now('enqueue video', data);
+//agenda.now('enqueue video', {url: 'http://www.youtube.com/watch?v=ouHVkMo3gwE', show: 'Python'});
+//agenda.now('enqueue video', {url: 'http://www.youtube.com/watch?v=zhZOGST52ds', show: 'Youtube'});
+
+var path = require('path');
+var fs = require('fs');
+
+var download_path = path.join(__dirname, '../download');
+var files = fs.readdirSync(download_path), i, n = 1;
+for (i = 0; i < files.length; ++i) {
+    if (files[i] == '.DS_Store') {
+        continue;
+    }
+    var file = path.join(download_path, files[i]);
+    console.log(file);
+
+    agenda.now('convert file for iPad', {
+        data: {show: 'CodeClinic', episodeNumber: n++},
+        filename: file
+    });
+}
 
 agenda._db.close(function (err) {
     process.exit();
