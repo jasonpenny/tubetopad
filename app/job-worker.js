@@ -155,6 +155,10 @@ agenda.define('set tv show metadata', {concurrency: 1}, function (job, done) {
     args.push('--TVShowName "' + data.show + '"');
     args.push('--TVSeasonNum 1');
     args.push('--stik "TV Show"');
+
+    // if sort director (artist) is not set, my iPad will group all tv shows
+    args.push('--artist T');
+
     var artwork_path = path.join(__dirname, '../covers', data.show + '.jpg');
     args.push('--artwork "' + artwork_path + '"');
     if (data.episodeNumber) {
