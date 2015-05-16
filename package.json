@@ -28,6 +28,21 @@
     "youtube-dl": "^1.10.2"
   },
   "browserify": {
-      "transform": ["browserify-ng-html2js"]
-  }
+    "transform": [
+      "browserify-ng-html2js"
+    ]
+  },
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jasonpenny/tubetopad"
+  },
+  "keywords": [
+    "youtube",
+    "ipad"
+  ],
+  "bugs": {
+    "url": "https://github.com/jasonpenny/tubetopad/issues"
+  },
+  "homepage": "https://github.com/jasonpenny/tubetopad"
 }
