@@ -1,5 +1,14 @@
+<div style="height:1em">
+    <div style="width:50%; position:absolute; top:4px">
+        <input style="width:90%" ng-model="vc.search">
+    </div>
+    <div style="width:20%; position:absolute; top:4px; left:50%">
+        <select style="width:90%" ng-options="show for show in vc.shows" ng-model="vc.showFilter.show">
+        </select>
+    </div>
+</div>
 <ul>
-    <li ng-repeat="video in vc.videos">
-        <a href="#/video/{{video._id}}">{{video.filename}}</a>
+    <li ng-repeat="video in vc.videos | filter:vc.showFilter | filter:vc.search">
+        {{video.show}} - <a href="#/video/{{video._id}}">{{video.filename}}</a>
     </li>
 </ul>

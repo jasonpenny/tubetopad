@@ -1,3 +1,4 @@
+var fs = require('fs');
 var express = require('express');
 var mongoose = require('mongoose');
 var app = express();
@@ -15,5 +16,15 @@ app.get('/api/video', function (req, res, next) {
             res.json(videos);
         });
 });
+
+app.get('/api/shows', function (req, res, next) {
+    fs.readdir(__dirname + '/../covers', function (err, files) {
+        var shows = files.map(function (s) {
+            return s.substring(0, s.indexOf('.'));
+        });
+        res.json(shows);
+    });
+});
+
 app.listen(3000);
 console.log('Listening on http://localhost:3000/');

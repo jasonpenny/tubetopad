@@ -21,12 +21,32 @@ angular.module('videosApp', ['ngRoute', 'videos_list.html', 'video_details.html'
                 };
             }
     ])
+    .factory('showsSvc', [
+        '$http', function ($http) {
+            var httpreq = $http.get('/api/shows');
+
+            return {
+                shows: function () {
+                    return httpreq
+                        .then(function (data) {
+                            return data.data;
+                        });
+                }
+            };
+        }
+    ])
     .controller('VideosController', [
-            '$http', 'videosSvc', function ($http, videosSvc) {
+            '$http', 'videosSvc', 'showsSvc', function ($http, videosSvc, showsSvc) {
                 var vc = this;
 
                 videosSvc.videos().then(function (data) {
                     vc.videos = data;
+                });
+
+                vc.shows = [''];
+                vc.showFilter = { "show": "" };
+                showsSvc.shows().then(function (data) {
+                    vc.shows = [''].concat(data);
                 });
             }
     ])
