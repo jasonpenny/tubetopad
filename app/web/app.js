@@ -48,6 +48,17 @@ angular.module('videosApp', ['ngRoute', 'videos_list.html', 'video_details.html'
                 showsSvc.shows().then(function (data) {
                     vc.shows = [''].concat(data);
                 });
+
+                vc.addUrl = function () {
+                    var data = {
+                        url: vc.search,
+                        show: vc.showFilter.show
+                    };
+                    $http.post('/api/show', data)
+                        .then(function () {
+                            vc.search = '';
+                        });
+                };
             }
     ])
     .controller('DetailsController', [

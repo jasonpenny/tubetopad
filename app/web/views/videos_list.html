@@ -6,6 +6,9 @@
         <select style="width:90%" ng-options="show for show in vc.shows" ng-model="vc.showFilter.show">
         </select>
     </div>
+    <div style="position: absolute; top:4px; left:75%;">
+        <button ng-click="vc.addUrl()">Add URL</button>
+    </div>
 </div>
 <ul>
     <li ng-repeat="video in vc.videos | filter:vc.showFilter | filter:vc.search">
