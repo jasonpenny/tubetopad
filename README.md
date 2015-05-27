@@ -13,7 +13,7 @@ Install mongodb
 
 Run `npm install`
 
-Run `node app/job-worker.js`
+Run `node index.js`
 
-Add a youtube url to app/test-runner.js then run `node
-app/test-runner.js`
+Open http://localhost:3000/
+Enter a URL, select the show and click Add URL
