@@ -49,9 +49,14 @@ app.post('/api/show', function (req, res, next) {
             size: info.size,
             updated_at: (new Date())
         };
-        agenda.now('enqueue video', data);
+        agenda._db.insert(data, function () {
+            data.video_id = data._id;
+            delete data._id;
 
-        res.json(data);
+            agenda.now('enqueue video', data);
+
+            res.json(data);
+        });
     });
 });
 

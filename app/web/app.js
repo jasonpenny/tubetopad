@@ -55,7 +55,8 @@ angular.module('videosApp', ['ngRoute', 'videos_list.html', 'video_details.html'
                         show: vc.showFilter.show
                     };
                     $http.post('/api/show', data)
-                        .then(function () {
+                        .then(function (response) {
+                            vc.videos.unshift(response.data);
                             vc.search = '';
                         });
                 };
@@ -66,7 +67,7 @@ angular.module('videosApp', ['ngRoute', 'videos_list.html', 'video_details.html'
                 var dc = this;
 
                 videosSvc.videos().then(function (data) {
-                    dc.video = _.where(data, {_id: $routeParams.id})[0];
+                    dc.video = _.where(data, {video_id: $routeParams.id})[0];
                 });
             }
     ])

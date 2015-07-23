@@ -12,6 +12,6 @@
 </div>
 <ul>
     <li ng-repeat="video in vc.videos | filter:vc.showFilter | filter:vc.search">
-        {{video.show}} - <a href="#/video/{{video._id}}">{{video.filename}}</a>
+        {{video.show}} - <a href="#/video/{{video.video_id}}">{{video.filename}}</a>
     </li>
 </ul>
