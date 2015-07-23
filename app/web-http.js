@@ -3,6 +3,7 @@ var express = require('express');
 var bodyParser = require('body-parser');
 var mongoose = require('mongoose');
 var Agenda = require('agenda');
+var youtubedl = require('youtube-dl');
 
 var app = express();
 
@@ -34,8 +35,24 @@ app.get('/api/shows', function (req, res, next) {
 
 app.post('/api/show', function (req, res, next) {
     console.log(req.body);
-    agenda.now('enqueue video', req.body);
-    res.json({success:true});
+
+    var video = youtubedl(req.body.url);
+    video.on('info', function (info) {
+        //agenda.now('enqueue video', req.body);
+        var data = {
+            url: req.body.url,
+            show: req.body.show,
+            filename: info._filename,
+            description: info.description,
+            duration: info.duration,
+            thumbnail: info.thumbnail,
+            size: info.size,
+            updated_at: (new Date())
+        };
+        agenda.now('enqueue video', data);
+
+        res.json(data);
+    });
 });
 
 app.listen(3000);

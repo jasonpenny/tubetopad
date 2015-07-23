@@ -37,34 +37,12 @@ agenda.define('download URL', {concurrency: 1}, function (job, done) {
     var failed = false, errorEvent = null;
     var video = youtubedl(data.url);
     // var size = 0;
-    var output_filename = '';
-    video.on('info', function (info) {
-        var output_path = path.join(__dirname, '../download');
-        mkdir(output_path);
 
-        console.log('               ' + info._filename);
+    var output_path = path.join(__dirname, '../download');
+    mkdir(output_path);
 
-        //size = info.size;
-        data.filename = info._filename;
-        var updated_at = new Date();
-        agenda._db.updateById(
-            data._id.toString(),
-            {
-                $set: {
-                    filename: data.filename,
-                    description: info.description,
-                    duration: info.duration,
-                    thumbnail: info.thumbnail,
-                    size: info.size,
-                    updated_at: updated_at
-                }
-            },
-            function () {
-                output_filename = path.join(output_path, data.filename);
-                video.pipe(fs.createWriteStream(output_filename));
-            }
-        );
-    });
+    var output_filename = path.join(output_path, data.filename);
+    video.pipe(fs.createWriteStream(output_filename));
 
     //var pos = 0;
     //video.on('data', function(data) {
