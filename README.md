@@ -8,10 +8,14 @@ to mp4 format with acceptible dimensions, and set TV Show metadata. The
 resulting file can then be dragged onto iTunes and will sync to your
 iPad as a TV Show.
 
+![Screenshot](/../screenshots/main.png?raw=true)
+
 ## Quick start
 Install mongodb
 
 Run `npm install`
+
+Run `./node_modules/gulp/bin/gulp.js`
 
 Run `node index.js`
 

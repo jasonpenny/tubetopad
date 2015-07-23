@@ -15,6 +15,8 @@ gulp.task('build-js', ['clean'], function () {
             entries: ['./app/web/app.js']
         }).transform(
             ngHtml2Js()
+        ).transform(
+            'browserify-css', {global: true}
         );
     return b.bundle()
         .pipe(source('bundle.js'))

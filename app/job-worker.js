@@ -3,12 +3,35 @@ var fs = require('fs');
 var youtubedl = require('youtube-dl');
 var handbrake = require('handbrake-js');
 var exec = require('child_process').exec;
+var mongoose = require('mongoose');
 
 var Agenda = require('agenda');
 var agenda = new Agenda({
     db: {address: 'localhost:27017/tubetopad'},
-    defaultLockLifetime: 2 * 60 * 60 * 1000 // 2 hours
+    defaultLockLifetime: 24 * 60 * 60 * 1000 // 24 hours
 });
+
+// mongoose.set('debug', true);
+mongoose.connect('mongodb://localhost:27017/tubetopad');
+function handleError(err) {
+    console.error('handleError', err);
+}
+mongoose.connection.on('error', handleError);
+
+var workerupdatesSchema = new mongoose.Schema(
+    {
+        worker: String,
+        step: Number,
+        progress: Number
+    },
+    {
+        capped: {
+            size: 16777216,
+            autoIndexId: true
+        }
+    });
+
+var workerupdates = mongoose.model('workerupdates', workerupdatesSchema);
 
 function mkdir(dir_path) {
     try {
@@ -32,11 +55,17 @@ agenda.define('enqueue video', function (job, done) {
 agenda.define('download URL', {concurrency: 1}, function (job, done) {
     var data = job.attrs.data;
 
-    console.log('downloadVideo: ' + path.basename(data.url));
+    var shortUrl = path.basename(data.url);
+    console.log('downloadVideo: ' + shortUrl);
+    var rec = new workerupdates({
+        worker: data.video_id.toString(),
+        step: 1,
+        progress: 0
+    });
+    rec.save();
 
     var failed = false, errorEvent = null;
     var video = youtubedl(data.url);
-    // var size = 0;
 
     var output_path = path.join(__dirname, '../download');
     mkdir(output_path);
@@ -44,16 +73,22 @@ agenda.define('download URL', {concurrency: 1}, function (job, done) {
     var output_filename = path.join(output_path, data.filename);
     video.pipe(fs.createWriteStream(output_filename));
 
-    //var pos = 0;
-    //video.on('data', function(data) {
-    //    pos += data.length;
-    //    if (size) {
-    //        var percent = (pos / size * 100).toFixed(2);
-    //        process.stdout.cursorTo(0);
-    //        process.stdout.clearLine(1);
-    //        process.stdout.write(pos + ' ' + percent + '%');
-    //    }
-    //});
+    var pos = 0, lastPercent = 0;
+    video.on('data', function(_data) {
+        pos += _data.length;
+        if (data.size) {
+            var percent = (pos / data.size * 100).toFixed();
+            if (percent != lastPercent) {
+                lastPercent = percent;
+                var rec = new workerupdates({
+                    worker: data.video_id.toString(),
+                    step: 1,
+                    progress: lastPercent
+                });
+                rec.save();
+            }
+        }
+    });
 
     video.on('error', function (err) {
         failed = true;
@@ -69,13 +104,20 @@ agenda.define('download URL', {concurrency: 1}, function (job, done) {
             done();
         } else {
             console.log('finished downloading', output_filename);
+            var rec = new workerupdates({
+                worker: data.video_id.toString(),
+                step: 1,
+                progress: 100
+            });
+            rec.save();
             agenda.now('convert file for iPad', {data: data, filename: output_filename});
             done();
         }
     });
 });
 agenda.define('convert file for iPad', {concurrency: 1}, function (job, done) {
-    var inputfile = job.attrs.data.filename;
+    var data = job.attrs.data;
+    var inputfile = data.filename;
 
     console.log('convertFileForIPad: ' + path.basename(inputfile));
 
@@ -98,13 +140,19 @@ agenda.define('convert file for iPad', {concurrency: 1}, function (job, done) {
         job.save();
         done();
     });
-    //hb.on('progress', function (progress) {
-    //    console.log(
-    //        "Percent complete: %s, ETA: %s",
-    //        progress.percentComplete,
-    //        progress.eta
-    //    );
-    //});
+    var lastPercent = 0;
+    hb.on('progress', function (progress) {
+        var percent = progress.percentComplete.toFixed();
+        if (percent != lastPercent) {
+            lastPercent = percent;
+            var rec = new workerupdates({
+                worker: data.data.video_id.toString(),
+                step: 2,
+                progress: lastPercent
+            });
+            rec.save();
+        }
+    });
     hb.on('end', function (err) {
         console.log('handbrake finished', options.output);
         if (failed || err) {
@@ -157,7 +205,13 @@ agenda.define('set tv show metadata', {concurrency: 1}, function (job, done) {
             job.save();
             done();
         } else {
+            var rec = new workerupdates({
+                worker: data.video_id.toString(),
+                step: 3,
+                progress: 100
+            });
             console.log('finished ' + data.filename);
+            rec.save();
             done();
         }
     });

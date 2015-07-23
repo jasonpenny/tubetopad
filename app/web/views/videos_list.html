@@ -6,12 +6,15 @@
         <select style="width:90%" ng-options="show for show in vc.shows" ng-model="vc.showFilter.show">
         </select>
     </div>
-    <div style="position: absolute; top:4px; left:75%;">
+    <div style="position:absolute; top:4px; left:75%;">
         <button ng-click="vc.addUrl()">Add URL</button>
     </div>
 </div>
-<ul>
+<ul style="margin-top:2em">
     <li ng-repeat="video in vc.videos | filter:vc.showFilter | filter:vc.search">
         {{video.show}} - <a href="#/video/{{video.video_id}}">{{video.filename}}</a>
+        <div ng-if="video.showProgress">
+            <progressbar style="width:160px;height:1.4em" value="video.progress">{{video.progress}}</progressbar>
+        </div>
     </li>
 </ul>

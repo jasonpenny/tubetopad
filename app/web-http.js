@@ -4,6 +4,7 @@ var bodyParser = require('body-parser');
 var mongoose = require('mongoose');
 var Agenda = require('agenda');
 var youtubedl = require('youtube-dl');
+var socketio = require('socket.io');
 
 var app = express();
 
@@ -60,5 +61,56 @@ app.post('/api/show', function (req, res, next) {
     });
 });
 
-app.listen(3000);
+var server = app.listen(3000);
+var io = socketio.listen(server);
+
+var workerupdatesSchema = new mongoose.Schema(
+    {
+        worker: String,
+        step: Number,
+        progress: Number
+    },
+    {
+        capped: {
+            size: 16777216,
+            autoIndexId: true
+        }
+    });
+
+var workerupdates = mongoose.model('workerupdates', workerupdatesSchema);
+
+io.sockets.on('connection', function (socket) {
+    console.log('new connection');
+    socket.emit('info', {msg: 'socket.io connection'});
+
+    workerupdates.find({})
+        .sort({"$natural": -1})
+        .limit(1)
+        .exec(function(err, docs) {
+            if (err) throw err;
+
+            var search = {"_id": {"$gt": docs[0].id}};
+            var fields = null;
+            var tailOpts = {
+                tailable: true,
+                awaitdata: true,
+                numberOfRetries: Number.MAX_VALUE
+            };
+            var stream = workerupdates
+                .find(search, fields, tailOpts)
+                .stream();
+
+            stream.on('data', function (doc) {
+                console.log('stream data');
+                console.log(doc);
+                socket.emit('info', doc);
+            });
+            stream.on('error', function (err) {
+                console.log('stream error');
+                console.log(err);
+                socket.emit('info', doc);
+            });
+        });
+});
+
 console.log('Listening on http://localhost:3000/');
