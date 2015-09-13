@@ -35,7 +35,7 @@ app.get('/api/shows', function (req, res, next) {
 });
 
 app.post('/api/show', function (req, res, next) {
-    console.log(req.body);
+    //console.log(req.body);
 
     var video = youtubedl(req.body.url);
     video.on('info', function (info) {
@@ -80,7 +80,7 @@ var workerupdatesSchema = new mongoose.Schema(
 var workerupdates = mongoose.model('workerupdates', workerupdatesSchema);
 
 io.sockets.on('connection', function (socket) {
-    console.log('new connection');
+    //console.log('new connection');
     socket.emit('info', {msg: 'socket.io connection'});
 
     workerupdates.find({})
@@ -101,13 +101,11 @@ io.sockets.on('connection', function (socket) {
                 .stream();
 
             stream.on('data', function (doc) {
-                console.log('stream data');
-                console.log(doc);
                 socket.emit('info', doc);
             });
             stream.on('error', function (err) {
-                console.log('stream error');
-                console.log(err);
+                //console.log('stream error');
+                //console.log(err);
                 socket.emit('info', doc);
             });
         });

@@ -74,7 +74,6 @@ angular.module('videosApp', ['ngRoute', 'ui.bootstrap', 'videos_list.html', 'vid
                 });
 
                 socket.on('info', function (data) {
-                    console.log(data);
                     videosSvc.videos().then(function (videos) {
                         var video = _.where(videos, {video_id: data.worker})[0];
                         if (video) {
