@@ -3,35 +3,13 @@ var fs = require('fs');
 var youtubedl = require('youtube-dl');
 var handbrake = require('handbrake-js');
 var exec = require('child_process').exec;
-var mongoose = require('mongoose');
+var updater = require('./job-worker-updates');
 
 var Agenda = require('agenda');
 var agenda = new Agenda({
     db: {address: 'localhost:27017/tubetopad'},
     defaultLockLifetime: 24 * 60 * 60 * 1000 // 24 hours
 });
-
-// mongoose.set('debug', true);
-mongoose.connect('mongodb://localhost:27017/tubetopad');
-function handleError(err) {
-    console.error('handleError', err);
-}
-mongoose.connection.on('error', handleError);
-
-var workerupdatesSchema = new mongoose.Schema(
-    {
-        worker: String,
-        step: Number,
-        progress: Number
-    },
-    {
-        capped: {
-            size: 16777216,
-            autoIndexId: true
-        }
-    });
-
-var workerupdates = mongoose.model('workerupdates', workerupdatesSchema);
 
 function mkdir(dir_path) {
     try {
@@ -57,12 +35,11 @@ agenda.define('download URL', {concurrency: 1}, function (job, done) {
 
     var shortUrl = path.basename(data.url);
     console.log('downloadVideo: ' + shortUrl);
-    var rec = new workerupdates({
+    updater.send({
         worker: data.video_id.toString(),
         step: 1,
         progress: 0
     });
-    rec.save();
 
     var failed = false, errorEvent = null;
     var video = youtubedl(data.url);
@@ -80,12 +57,11 @@ agenda.define('download URL', {concurrency: 1}, function (job, done) {
             var percent = (pos / data.size * 100).toFixed();
             if (percent != lastPercent) {
                 lastPercent = percent;
-                var rec = new workerupdates({
+                updater.send({
                     worker: data.video_id.toString(),
                     step: 1,
                     progress: lastPercent
                 });
-                rec.save();
             }
         }
     });
@@ -104,12 +80,11 @@ agenda.define('download URL', {concurrency: 1}, function (job, done) {
             done();
         } else {
             console.log('finished downloading', output_filename);
-            var rec = new workerupdates({
+            updater.send({
                 worker: data.video_id.toString(),
                 step: 1,
                 progress: 100
             });
-            rec.save();
             agenda.now('convert file for iPad', {data: data, filename: output_filename});
             done();
         }
@@ -145,12 +120,11 @@ agenda.define('convert file for iPad', {concurrency: 1}, function (job, done) {
         var percent = progress.percentComplete.toFixed();
         if (percent != lastPercent) {
             lastPercent = percent;
-            var rec = new workerupdates({
+            updater.send({
                 worker: data.data.video_id.toString(),
                 step: 2,
                 progress: lastPercent
             });
-            rec.save();
         }
     });
     hb.on('end', function (err) {
@@ -205,13 +179,12 @@ agenda.define('set tv show metadata', {concurrency: 1}, function (job, done) {
             job.save();
             done();
         } else {
-            var rec = new workerupdates({
+            updater.send({
                 worker: data.video_id.toString(),
                 step: 3,
                 progress: 100
             });
             console.log('finished ' + data.filename);
-            rec.save();
             done();
         }
     });
