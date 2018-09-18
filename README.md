@@ -1,3 +1,7 @@
+:skull: :exclamation: This project has been archived, now I put videos into a Plex library
+with https://github.com/jasonpenny/tubetoplex
+
+
 # TubeToPad
 
 A tool to automatically download youtube videos and make ready for
